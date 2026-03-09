@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   vllm:
-    image: vllm/vllm-openai:latest
+    build: .
     container_name: vllm
     runtime: nvidia
     ports:
@@ -12,16 +12,21 @@ services:
       - ./models:/models
     environment:
       - NVIDIA_VISIBLE_DEVICES=0
-      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:512
+      - VLLM_LOGGING_LEVEL=DEBUG
     command: >
-      --model /models/Qwen3-Coder-30B-A3B-Instruct-GPTQ-4bit
-      --served-model-name qwen3-coder
+      --model deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+      --served-model-name deepseek-coder
       --tensor-parallel-size 1
-      --max-model-len 8192
+      --quantization bitsandbytes
+      --max-model-len 4096
       --gpu-memory-utilization 0.80
-      --max-num-batched-tokens 1024
+      --max-num-batched-tokens 256
       --enable-auto-tool-choice
-      --tool-call-parser qwen3_coder
+      --enable-prefix-caching
+      --tool-call-parser openai
+      --max-num-seqs 8
+      --swap-space 8
 
   chroma:
     image: chromadb/chroma

@@ -28,3 +28,15 @@ Had to run
 ```
   chmod 777 /var/run/docker.sock
 ```
+
+Nvidia runtime issue
+
+https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_visual_slam/issues/132#issuecomment-2134831510
+
+curl http://gateway.coffee-dev.uk/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"deepseek-coder",
+    "messages":[{"role":"user","content":"write a hello world in go"}]
+  }'
