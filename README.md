@@ -26,7 +26,7 @@ Ran into permissions issue with docker
 ```
 Had to run
 ```
-  chmod 777 /var/run/docker.sock
+  sudo chmod 777 /var/run/docker.sock
 ```
 
 Nvidia runtime issue
@@ -34,9 +34,21 @@ Nvidia runtime issue
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_visual_slam/issues/132#issuecomment-2134831510
 
-curl http://gateway.coffee-dev.uk/chat/stream \
+curl http://gateway.coffee-dev.uk/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model":"deepseek-coder",
+    "model":"qwen3-coder",
     "messages":[{"role":"user","content":"write a hello world in go"}]
   }'
+
+
+Things to try
+--chunked-prefill
+--prefix-cache
+--dtype float16
+--use-cuda-graph
+
+On a single 3090, increasing max-num-batched-tokens slightly (e.g., 512–768) may increase throughput without hitting VRAM limits, especially if you combine it with explicit KV cache allocation.
+
+Give exact number of cpu threads
+export OMP_NUM_THREADS=8

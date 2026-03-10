@@ -10,7 +10,7 @@ EMBED_URL = "http://embeddings:80/embed"
 
 @app.get("/")
 def root():
-    return {"status": "ai-dev-cloud running"}
+    return {"status": "swarm is ready to attack"}
 
 @app.post("/embeddings")
 async def embeddings(payload: dict):
@@ -19,33 +19,15 @@ async def embeddings(payload: dict):
         r = await client.post(EMBED_URL, json=payload)
         return r.json()
 
-@app.post("/chat/stream")
+@app.post("/v1/chat/completions")
 async def chat_stream(payload: dict):
-    """
-    Streams tokens from vLLM back to the client in real-time.
-    Expects OpenAI-style messages format:
-    {
-        "model": "deepseek-coder",
-        "messages": [{"role": "user", "content": "Prompt text"}],
-        "max_tokens": 512
-    }
-    """
-    timeout = httpx.Timeout(None)  # disable client timeout for streaming
+    print("DEBUG PAYLOAD:", payload)
+    payload["stream"] = True
 
-    async def event_generator():
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            async with client.stream("POST", VLLM_URL, json=payload) as response:
-                async for line in response.aiter_lines():
-                    if line:
-                        try:
-                            # vLLM streams JSON lines like {"choices":[{"delta":{"content":"text"}}]}
-                            event = json.loads(line)
-                            # Extract token content
-                            token = event["choices"][0]["delta"].get("content")
-                            if token:
-                                yield token
-                        except Exception:
-                            # ignore non-JSON lines
-                            continue
+    async def stream():
+        async with httpx.AsyncClient(timeout=None) as client:
+            async with client.stream("POST", VLLM_URL, json=payload) as r:
+                async for chunk in r.aiter_bytes():
+                    yield chunk
 
-    return StreamingResponse(event_generator(), media_type="text/plain")
+    return StreamingResponse(stream(), media_type="text/event-stream")
