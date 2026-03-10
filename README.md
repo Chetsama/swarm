@@ -120,7 +120,7 @@ async def proxy(path: str, request: Request):
     )
 
 
-I'm seeing a couple issues. My IDE sends a structured message like this
+I'm seeing a couple issues. My IDE (Zed) sends a structured message like this
 
 "content": [
   {"type": "text", "text": "Hello"},
@@ -131,4 +131,10 @@ The behaviour I'm seeing is that a response is placed into the title of the chat
 
 <think>Okay, the user is asking if I'm there. They want a title for the conversation. The title needs to be 3-7 words, no punctuation. Let me think. The conversation is about checking if I'm present. So maybe "Checking If You're Present" but that's 6 words. Wait, "Confirming Presence" is 2 words. But maybe "Are You There" is 3 words. That's direct and to the point. It's a question, but the user said to omit punctuation, so "Are You There" without the question mark. That fits the requirements. It's descriptive and includes the specific subject of confirming presence. I think that's it.</think>
 
-But I'm not getting a response in the chat itself. Can you attempt to remedy this problem as simply as possible without refactoring the router.
+But I'm not getting a response in the chat itself. I'm also getting this error in zed
+
+"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set
+
+When I try and change yield chunk to, yield b"data: " + chunk + b"\n\n"
+
+Can you attempt to remedy this problem as simply as possible without refactoring the router.

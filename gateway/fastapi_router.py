@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 import httpx
+import json
 
 app = FastAPI()
 
@@ -11,6 +12,28 @@ async def proxy(path: str, request: Request):
 
     url = f"{VLLM_URL}/v1/{path}"
     body = await request.body()
+
+    # Handle Zed/vLLM compatibility
+    if request.method == "POST":
+        try:
+            data = json.loads(body)
+
+            # Flatten structured content [ {"type": "text", "text": "..."} ]
+            if "messages" in data:
+                for msg in data["messages"]:
+                    if isinstance(msg.get("content"), list):
+                        msg["content"] = "\n".join([
+                            c.get("text", "") for c in msg["content"]
+                            if isinstance(c, dict) and c.get("type") == "text"
+                        ])
+
+            # Zed sends tools by default; strip them to avoid vLLM requirement errors
+            data.pop("tool_choice", None)
+            data.pop("tools", None)
+
+            body = json.dumps(data).encode()
+        except (json.JSONDecodeError, KeyError, TypeError):
+            pass
 
     async def stream_response():
         async with httpx.AsyncClient(timeout=None) as client:
@@ -23,7 +46,6 @@ async def proxy(path: str, request: Request):
                     if k.lower() not in ["host", "content-length"]
                 },
             ) as r:
-
                 async for chunk in r.aiter_raw():
                     yield chunk
 
