@@ -7,6 +7,10 @@ app = FastAPI()
 
 VLLM_URL = "http://vllm:8000"
 
+@app.get("/")
+def root():
+    return {"status": "I'm ready to help papa"}
+
 @app.api_route("/v1/{path:path}", methods=["GET", "POST"])
 async def proxy(path: str, request: Request):
 
