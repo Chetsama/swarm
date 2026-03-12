@@ -40,8 +40,7 @@ services:
     image: python:3.11
     working_dir: /app
     volumes:
-      - ./gateway:/app
-      - ./tools:/tools
-    command: bash -c "pip install fastapi uvicorn httpx && uvicorn fastapi_router:app --host 0.0.0.0 --port 9000"
+      - .:/app
+    command: bash -c "pip install fastapi uvicorn httpx && uvicorn gateway.fastapi_router:app --host 0.0.0.0 --port 9000"
     ports:
       - "9000:9000"
