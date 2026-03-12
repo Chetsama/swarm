@@ -5,8 +5,10 @@ import json
 import sys
 import os
 
-# Ensure the root directory is in PYTHONPATH to import agents and tools
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Ensure the project root is in PYTHONPATH
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 from agents import executor
 from tools.definitions import TOOL_DEFINITIONS
