@@ -90,3 +90,7 @@ As I understand the routing right now happens like so,
 -Tool calls are baked in to vLLM
 
 I'm yet to implement multipl agents but I'd like to get the routing setup to enable this in the future. Can you change the current setup so that we route and ultimately use the executor for our single instance?
+
+[issue-006] Wrong Trousers (DONE)
+
+Using the wrong model
