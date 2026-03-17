@@ -53,26 +53,19 @@ services:
       - embeddings
 
   langgraph:
-    build: .
-    container_name: langgraph
+    image: python:3.11
+    working_dir: /app
+    volumes:
+      - ./agents:/app/agents
+      - ./tools:/app/tools
+      - ./:/app
+    command: bash -c "pip install langgraph langchain-core langchain-openai && python /app/agents/langgraph_demo.py"
+    ports:
+      - "9001:9001"
     depends_on:
       - vllm
       - chroma
       - embeddings
-    ports:
-      - "9001:9001"
-    volumes:
-      - ./:/app
-    command: >
-      bash -c "
-        pip install langgraph langchain-core langchain-openai &&
-        python -m agents.langgraph_demo
-      "
-    environment:
-      - VLLM_URL=http://vllm:8000
-      - CHROMA_URL=http://chroma:8000
-      - EMBEDDINGS_URL=http://embeddings:80
-      - LANGGRAPH_PORT=9001
 
 volumes:
   chroma_data:
