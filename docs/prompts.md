@@ -10,4 +10,4 @@ Create a minimal langgraph implementation with a single planner agent and point 
 
 Adjust the docker compose and gateway/fastapi_router.py to maintain the current flow.
 
-Favour editing existing files over creating new ones. Don't attempt to run the project. Please don't delete any existing files. If you are unsure about anything ask me
+Favour editing existing files over creating new ones. Don't attempt to run the project. Please don't delete any existing files. When importing python packages, consider that they need to be added to the appropriate service in the docker-compose

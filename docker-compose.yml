@@ -43,7 +43,7 @@ services:
       - ./agents:/app/agents
       - ./tools:/app/tools
       - ./:/app
-    command: bash -c "pip install langgraph langchain-core langchain-openai && python /app/agents/langgraph_orchestrator.py"
+    command: bash -c "pip install langgraph langchain-core langchain-openai fastapi && python /app/agents/langgraph_orchestrator.py"
     ports:
       - "9001:9001"
 
