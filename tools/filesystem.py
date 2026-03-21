@@ -36,13 +36,23 @@ def write_file(path: str, content: str) -> str:
     Writes the content to the file at the given path.
     
     Args:
-        path: The path of the file to write to.
+        path: The path of the file to write to. (Prefer relative paths like 'tools/my_tool.py').
         content: The text content to write into the file.
     """
-    print(f"DEBUG: calling write_file with path={path} and content length {len(content)}")
+    # Simple fix for windows-style absolute paths that might be passed by mistake
+    if ":" in path and (path.startswith("C:") or path.startswith("c:")):
+         # Extract the part after the drive letter and remove leading slashes
+         parts = path.split(":", 1)
+         path = parts[1].lstrip("\\/")
+    
+    abs_path = os.path.abspath(path)
+    print(f"DEBUG: calling write_file with path={path} (absolute: {abs_path})")
+    
     try:
-        with open(path, "w", encoding="utf-8") as file:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        with open(abs_path, "w", encoding="utf-8") as file:
             file.write(content)
-        return f"Successfully wrote to {path}"
+        return f"Successfully wrote to {path} (internal path: {abs_path})"
     except Exception as e:
         return f"Error writing file: {str(e)}"

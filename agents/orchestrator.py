@@ -96,6 +96,8 @@ class OrchestratorAgent:
             content=(
                 f"You are the executor. Your current task is:\n{step}\n\n"
                 "You have access to tools. Use them if necessary to accomplish the task.\n"
+                "When writing or reading files, use RELATIVE paths from the project root (e.g., 'tools/new_tool.py').\n"
+                "Do NOT use Windows absolute paths (like C:\\...).\n"
                 "If the task requires multiple actions (e.g., search then write), you can call tools sequentially.\n"
                 "When the task is complete, provide a final summary of what you did."
             )
