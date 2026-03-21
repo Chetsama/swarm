@@ -10,7 +10,6 @@ from langchain.messages import (
     SystemMessage,
     HumanMessage,
     ToolMessage,
-    BaseMessage,
 )
 from langgraph.graph import StateGraph, START, END
 from tools.registry import load_all_tools, get_tools_map
@@ -51,13 +50,13 @@ class OrchestratorAgent:
             openai_api_key="none",
             model_name=model_name,
         )
-        
+
         # Load external tools and merge with core tools
         external_tools = load_all_tools()
         self.tools = [add, multiply] + external_tools
         self.tools_by_name = get_tools_map(self.tools)
         self.executor_model = self.model.bind_tools(self.tools)
-        
+
         self.graph = self._build_graph()
 
     def _planner_node(self, state: AgentState):
@@ -69,7 +68,7 @@ class OrchestratorAgent:
             )
         )
         response = self.model.invoke([prompt] + state["messages"])
-        
+
         steps = []
         for line in response.content.split("\n"):
             line = line.strip()
@@ -90,7 +89,7 @@ class OrchestratorAgent:
 
         step = state["plan"][state["current_step"]]
         prompt = SystemMessage(content=f"Execute this step. Use tools if needed:\n{step}")
-        
+
         response = self.executor_model.invoke([prompt] + state["messages"])
         new_messages = [response]
 
@@ -98,7 +97,7 @@ class OrchestratorAgent:
             for call in response.tool_calls:
                 tool_name = call["name"]
                 tool_args = call["args"]
-                
+
                 if tool_name in self.tools_by_name:
                     tool_fn = self.tools_by_name[tool_name]
                     result = tool_fn.invoke(tool_args)
@@ -109,7 +108,7 @@ class OrchestratorAgent:
             # Follow-up after tool execution
             follow_up = self.executor_model.invoke(state["messages"] + new_messages)
             new_messages.append(follow_up)
-            
+
             return {
                 "messages": new_messages,
                 "last_result": follow_up.content,
@@ -158,7 +157,7 @@ class OrchestratorAgent:
         builder.add_edge("planner", "executor")
         builder.add_conditional_edges("executor", self._route_after_executor, ["executor", "critic"])
         builder.add_conditional_edges("critic", self._route_after_critic, ["executor", END])
-        
+
         return builder.compile()
 
     async def ainvoke(self, input_dict: Dict[str, Any]):
