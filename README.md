@@ -10,6 +10,10 @@ Config
 From the root directory, run docker compose up. This will spin up vLLM, hosted at http://vllm:8000
 
 And then run
+
+  python3 -m venv .venv
+  source .venv/bin/activate
+
 pip install fastapi uvicorn httpx langchain-openai langgraph langchain && uvicorn gateway.fastapi_router:app --host 0.0.0.0 --port 9000
 
 Currently, 
@@ -85,7 +89,7 @@ Nvidia runtime issue
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_visual_slam/issues/132#issuecomment-2134831510
 
-curl http://gateway.coffee-dev.uk/v1/chat/completions \
+curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model":"qwen3-coder",

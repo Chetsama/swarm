@@ -45,7 +45,7 @@ class AgentState(TypedDict):
 # =========================
 
 class OrchestratorAgent:
-    def __init__(self, model_name: str = "qwen3-coder", api_base: str = "http://gateway.coffee-dev.uk/v1"):
+    def __init__(self, model_name: str = "qwen3-coder", api_base: str = "http://localhost:9000/v1"):
         self.model = ChatOpenAI(
             openai_api_base=api_base,
             openai_api_key="none",
@@ -87,7 +87,7 @@ class OrchestratorAgent:
 
     def _executor_node(self, state: AgentState):
         if state["current_step"] >= len(state["plan"]):
-            # If we're here, it means we've executed everything. 
+            # If we're here, it means we've executed everything.
             # If the critic sent us back, we might want to restart or just return.
             return {"current_step": state["current_step"], "active_node": "executor"}
 
@@ -105,16 +105,16 @@ class OrchestratorAgent:
 
         current_messages = [prompt] + state["messages"]
         new_messages = []
-        
+
         # Loop for multiple tool turns
         for _ in range(3): # Limit to 3 rounds of tool calls per step to avoid runaway
             response = self.executor_model.invoke(current_messages)
             new_messages.append(response)
             current_messages.append(response)
-            
+
             if not response.tool_calls:
                 break
-                
+
             print(f"DEBUG: executor node detected tool calls: {response.tool_calls}")
             for call in response.tool_calls:
                 tool_name = call["name"]
@@ -133,7 +133,7 @@ class OrchestratorAgent:
                     msg = ToolMessage(content=f"Error: Tool {tool_name} not found", tool_call_id=call["id"])
                     new_messages.append(msg)
                     current_messages.append(msg)
-            
+
             # If it's just a tool call, continue the loop for the next turn
             # But if the model gave content alongside tool calls, it might be the final answer (rare)
             # Actually, LangChain's bind_tools models usually call tools then need to be called again.
@@ -156,12 +156,12 @@ class OrchestratorAgent:
             )
         )
         response = self.model.invoke([prompt] + state["messages"])
-        
+
         retries = state.get("retries", 0)
         is_retry = not response.content.startswith("PASS")
         if is_retry:
             retries += 1
-            
+
         return {
             "messages": [response],
             "retries": retries,
@@ -178,7 +178,7 @@ class OrchestratorAgent:
         last_msg = state["messages"][-1].content
         if last_msg.startswith("PASS") or state["retries"] >= 2:
             return END
-        
+
         # If we need to retry, go back to planner to potentially revise the plan
         # or reset step to 0 to restart execution.
         # Let's try resetting to 0 and going to executor first.

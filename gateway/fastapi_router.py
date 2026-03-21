@@ -10,7 +10,7 @@ from langchain.messages import HumanMessage, SystemMessage, AIMessage
 
 app = FastAPI()
 
-VLLM_URL = "http://llm.coffee-dev.uk:8000"
+VLLM_URL = "http://llm.coffee-dev.uk"
 agent = OrchestratorAgent(api_base=f"{VLLM_URL}/v1")
 
 @app.get("/")
