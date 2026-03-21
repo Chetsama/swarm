@@ -1,6 +1,9 @@
 import subprocess
+from langchain.tools import tool
 
-def run_command(cmd):
+@tool
+def run_shell_command(cmd: str) -> str:
+    """Executes a shell command and returns the stdout and stderr."""
     try:
         result = subprocess.run(
             cmd,
@@ -10,11 +13,7 @@ def run_command(cmd):
             timeout=30
         )
 
-        return {
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "returncode": result.returncode
-        }
+        return f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\nRETURN CODE: {result.returncode}"
 
     except Exception as e:
-        return {"error": str(e)}
+        return f"Error: {str(e)}"

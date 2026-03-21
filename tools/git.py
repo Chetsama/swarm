@@ -1,20 +1,22 @@
 import subprocess
+from langchain.tools import tool
 
-def git_status():
+@tool
+def git_status() -> str:
+    """Returns the output of 'git status'."""
     result = subprocess.run(
         ["git", "status"],
         capture_output=True,
         text=True
     )
-
     return result.stdout
 
-
-def git_diff():
+@tool
+def git_diff() -> str:
+    """Returns the output of 'git diff'."""
     result = subprocess.run(
         ["git", "diff"],
         capture_output=True,
         text=True
     )
-
     return result.stdout

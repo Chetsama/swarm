@@ -1,129 +1,143 @@
-def main():
-    # Step 1: Define tools and model
+# Step 1: Define tools and model
 
-    from langchain.tools import tool
-    from langchain.chat_models import init_chat_model
-    from langchain_openai import ChatOpenAI
+from langchain.tools import tool
+from langchain.chat_models import init_chat_model
+from langchain_openai import ChatOpenAI
+from tools import filesystem
 
 
-    model = ChatOpenAI(
-        #model="gpt-5-nano",
-        model="cyankiwi/Qwen3-Coder-30B-A3B-Instruct-AWQ-4bit",
-        api_key="none",
-        base_url="http://gateway.coffee-dev.uk/v1",
-        max_tokens=5,
-        temperature=0,
+model = ChatOpenAI(
+    openai_api_base="http://gateway.coffee-dev.uk/v1",
+    openai_api_key="none",
+    model_name="qwen3-coder",
     )
 
-
-    # Define tools
-    @tool
-    def multiply(a: int, b: int) -> int:
-        """Multiply `a` and `b`.
-
-        Args:
-            a: First int
-            b: Second int
-        """
-        return a * b
+# model = ChatOpenAI(
+#     #model="gpt-5-nano",
+#     model="cyankiwi/Qwen3-Coder-30B-A3B-Instruct-AWQ-4bit",
+#     api_key="none",
+#     base_url="http://gateway.coffee-dev.uk/v1",
+#     max_tokens=5,
+#     temperature=0,
+# )
 
 
-    @tool
-    def add(a: int, b: int) -> int:
-        """Adds `a` and `b`.
-
-        Args:
-            a: First int
-            b: Second int
-        """
-        return a + b
 
 
-    @tool
-    def divide(a: int, b: int) -> float:
-        """Divide `a` and `b`.
 
-        Args:
-            a: First int
-            b: Second int
-        """
-        return a / b
+# Define tools
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply `a` and `b`.
 
-
-    # Augment the LLM with tools
-    tools = [add, multiply, divide]
-    tools_by_name = {tool.name: tool for tool in tools}
-    model_with_tools = model.bind_tools(tools)
-
-    # Step 2: Define state
-
-    from langchain.messages import AnyMessage
-    from typing_extensions import TypedDict, Annotated
-    import operator
+    Args:
+        a: First int
+        b: Second int
+    """
+    return a * b
 
 
-    class MessagesState(TypedDict):
-        messages: Annotated[list[AnyMessage], operator.add]
-        llm_calls: int
+@tool
+def add(a: int, b: int) -> int:
+    """Adds `a` and `b`.
 
-    # Step 3: Define model node
-    from langchain.messages import SystemMessage
-
-
-    def llm_call(state: dict):
-        """LLM decides whether to call a tool or not"""
-
-        return {
-            "messages": [
-                model_with_tools.invoke(
-                    [
-                        SystemMessage(
-                            content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
-                        )
-                    ]
-                    + state["messages"]
-                )
-            ],
-            "llm_calls": state.get('llm_calls', 0) + 1
-        }
+    Args:
+        a: First int
+        b: Second int
+    """
+    return a + b
 
 
-    # Step 4: Define tool node
+@tool
+def divide(a: int, b: int) -> float:
+    """Divide `a` and `b`.
 
-    from langchain.messages import ToolMessage
-
-
-    def tool_node(state: dict):
-        """Performs the tool call"""
-
-        result = []
-        for tool_call in state["messages"][-1].tool_calls:
-            tool = tools_by_name[tool_call["name"]]
-            observation = tool.invoke(tool_call["args"])
-            result.append(ToolMessage(content=observation, tool_call_id=tool_call["id"]))
-        return {"messages": result}
-
-    # Step 5: Define logic to determine whether to end
-
-    from typing import Literal
-    from langgraph.graph import StateGraph, START, END
+    Args:
+        a: First int
+        b: Second int
+    """
+    return a / b
 
 
-    # Conditional edge function to route to the tool node or end based upon whether the LLM made a tool call
-    def should_continue(state: MessagesState) -> Literal["tool_node", END]:
-        """Decide if we should continue the loop or stop based upon whether the LLM made a tool call"""
+# Augment the LLM with tools
+tools = [add, multiply, divide,
+    #filesystem.list_files,
+    #filesystem.ReadFile
+    #filesystem.write_file
+]
+tools_by_name = {tool.name: tool for tool in tools}
+model_with_tools = model.bind_tools(tools)
 
-        messages = state["messages"]
-        last_message = messages[-1]
+# Step 2: Define state
 
-        # If the LLM makes a tool call, then perform an action
-        if last_message.tool_calls:
-            return "tool_node"
+from langchain.messages import AnyMessage
+from typing_extensions import TypedDict, Annotated
+import operator
 
-        # Otherwise, we stop (reply to the user)
-        return END
 
-    # Step 6: Build agent
+class MessagesState(TypedDict):
+    messages: Annotated[list[AnyMessage], operator.add]
+    llm_calls: int
+
+# Step 3: Define model node
+from langchain.messages import SystemMessage
+
+
+def llm_call(state: dict):
+    """LLM decides whether to call a tool or not"""
+
+    return {
+        "messages": [
+            model_with_tools.invoke(
+                [
+                    SystemMessage(
+                        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+                    )
+                ]
+                + state["messages"]
+            )
+        ],
+        "llm_calls": state.get('llm_calls', 0) + 1
+    }
+
+
+# Step 4: Define tool node
+
+from langchain.messages import ToolMessage
+
+
+def tool_node(state: dict):
+    """Performs the tool call"""
+
+    result = []
+    for tool_call in state["messages"][-1].tool_calls:
+        tool = tools_by_name[tool_call["name"]]
+        observation = tool.invoke(tool_call["args"])
+        result.append(ToolMessage(content=observation, tool_call_id=tool_call["id"]))
+    return {"messages": result}
+
+# Step 5: Define logic to determine whether to end
+
+from typing import Literal
+from langgraph.graph import StateGraph, START, END
+
+
+# Conditional edge function to route to the tool node or end based upon whether the LLM made a tool call
+def should_continue(state: MessagesState) -> Literal["tool_node", END]:
+    """Decide if we should continue the loop or stop based upon whether the LLM made a tool call"""
+
+    messages = state["messages"]
+    last_message = messages[-1]
+
+    # If the LLM makes a tool call, then perform an action
+    if last_message.tool_calls:
+        return "tool_node"
+
+    # Otherwise, we stop (reply to the user)
+    return END
+
+
+def agent():
     import IPython
 
     # Build workflow
@@ -152,11 +166,10 @@ def main():
 
     # Invoke
     from langchain.messages import HumanMessage
-    messages = [HumanMessage(content="Add 3 and 4.")]
+    messages = [HumanMessage(content="Can you read the the README.md?")]
     messages = agent.invoke({"messages": messages})
     for m in messages["messages"]:
         m.pretty_print()
 
-
 if __name__ == "__main__":
-    main()
+    agent()

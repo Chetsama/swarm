@@ -104,3 +104,24 @@ Can you please write a program to multiply to matrices together in polyml?
 ~44 tokens/s
 I asked it to read the docker compose
 106.5 tokens/second
+
+
+
+Here is how the traffic flow works now:
+
+   1. Entry: Your chat client sends a request to http://gateway.coffee-dev.uk/v1/chat/completions.
+   2. Internal Translation: This reaches your VM and is handled by the fastapi_router (listening on port 9000).
+   3. Interception: Instead of just passing the bytes to vLLM, the fastapi_router now recognizes the /v1/chat/completions path and hands the request to the OrchestratorAgent.
+   4. Agent Logic (The "Brain"):
+       * The agent begins its Planner -> Executor -> Critic cycle.
+       * Crucially, when the agent needs to "think" (i.e., ask the LLM to generate a plan or a response), it sends its own internal requests directly to http://vllm:8000/v1.
+       * This is the key fix: By pointing the agent at the vLLM backend directly, we avoid a recursive loop where the agent would have tried to call itself.
+   5. Tool Execution: If the plan requires a tool (like list_files or run_shell_command), the agent executes it locally on the VM.
+   6. Response: Once the critic node is satisfied, the final result is streamed back to you via the gateway, complete with the <thought> tags for visibility.
+
+  Verification of Implementation:
+   * In gateway/fastapi_router.py, I defined VLLM_URL = "http://vllm:8000".
+   * I initialized the agent with agent = OrchestratorAgent(api_base=f"{VLLM_URL}/v1").
+   * This ensures the "agentic" logic sits in the middle (at port 9000) but talks to the "raw" model (at port 8000) for its internal reasoning.
+
+  All other endpoints (like /v1/models) are still handled by the proxy function and passed directly to vLLM, so your setup remains fully compatible with existing tools.
