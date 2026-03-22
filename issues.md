@@ -113,3 +113,5 @@ Because swarm runs on a "VM", the langgraph agents act in a closed loop. This me
 Periodically hitting the context limit, impressively, it just keeps fucking going
 
 [issue-012] Make it easier to run elsewhere
+
+[issue-013] How often should the critic be intervening?
