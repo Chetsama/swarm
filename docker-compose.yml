@@ -14,13 +14,12 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:512
     command: >
-      --model google/gemma-4-26B-A4B
+      --model cyankiwi/gemma-4-26B-A4B-it-AWQ-4bit
       --served-model-name gemma4
-      --quantization awq
       --dtype auto
       --tensor-parallel-size 1
-      --max-model-len 40960
-      --gpu-memory-utilization 0.92
+      --max-model-len 2048
+      --gpu-memory-utilization 0.8
       --max-num-batched-tokens 256
       --max-num-seqs 2
 
@@ -35,11 +34,13 @@ services:
   #     - "8080:80"
   #   command: --model-id BAAI/bge-small-en-v1.5
 
-  # gateway:
-  #   image: python:3.11
-  #   working_dir: /app
-  #   volumes:
-  #     - .:/app
-  #   command: bash -c "pip install fastapi uvicorn httpx langchain-openai langgraph langchain && uvicorn gateway.fastapi_router:app --host 0.0.0.0 --port 9000"
-  #   ports:
-  #     - "9000:9000"
+  gateway:
+    image: python:3.11
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+    command: bash -c "pip install fastapi uvicorn httpx langchain-openai langgraph langchain langchain-community && uvicorn gateway.fastapi_router:app --host 0.0.0.0 --port 9000"
+    ports:
+      - "9000:9000"
